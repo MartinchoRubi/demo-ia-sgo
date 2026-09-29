@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>IA en la oficina · Santiago del Estero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0c1a24;
+      --ink-soft: #243644;
+      --paper: #f3f6f8;
+      --path-a: #1f8a7a;
+      --path-a-soft: #d8f0eb;
+      --path-b: #c9852a;
+      --path-b-soft: #f7e8cf;
+      --meet: #1d4e6b;
+      --meet-glow: #3d8bb0;
+      --shadow: 0 18px 50px rgba(12, 26, 36, 0.12);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(31, 138, 122, 0.18), transparent 55%),
+        radial-gradient(900px 600px at 95% 0%, rgba(201, 133, 42, 0.16), transparent 50%),
+        radial-gradient(800px 500px at 50% 110%, rgba(29, 78, 107, 0.14), transparent 45%),
+        linear-gradient(165deg, #f7fafb 0%, #eef3f6 48%, #e7eef3 100%);
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.35;
+      z-index: 0;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    .orb.one { width: 280px; height: 280px; background: #7fd0c0; top: -60px; left: -40px; }
+    .orb.two { width: 220px; height: 220px; background: #e8b86a; bottom: 10%; right: -50px; animation-delay: -4s; }
+    .orb.three { width: 180px; height: 180px; background: #6a9fbf; bottom: -40px; left: 35%; animation-delay: -8s; }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to { transform: translate(18px, -22px) scale(1.08); }
+    }
+
+    .grain {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 1;
+    }
+
+    .chrome {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: max(14px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    }
+
+    .topbar, .bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      background: rgba(255,255,255,0.58);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 999px;
+      padding: 8px 14px;
+    }
+    .brand-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--path-a), var(--path-b));
+      box-shadow: 0 0 0 3px rgba(31,138,122,0.15);
+    }
+
+    .path-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(12,26,36,0.06);
+      color: var(--ink-soft);
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: 0.35s ease;
+      white-space: nowrap;
+      max-width: 46vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .path-pill.show { opacity: 1; transform: none; }
+    .path-pill.a { color: var(--path-a); border-color: rgba(31,138,122,0.25); background: var(--path-a-soft); }
+    .path-pill.b { color: #8a5a12; border-color: rgba(201,133,42,0.28); background: var(--path-b-soft); }
+    .path-pill.meet { color: var(--meet); border-color: rgba(29,78,107,0.25); background: #d9e8f1; }
+
+    .progress-wrap {
+      flex: 1;
+      max-width: 220px;
+      height: 4px;
+      background: rgba(12,26,36,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-left: auto;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--path-a), var(--path-b), var(--meet-glow));
+      transition: width 0.4s ease;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      background: rgba(255,255,255,0.65);
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.8);
+    }
+    .hint kbd {
+      font-family: inherit;
+      font-weight: 700;
+      background: var(--ink);
+      color: white;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 0.72rem;
+      margin: 0 2px;
+    }
+    .counter {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      min-width: 54px;
+      text-align: right;
+    }
+    .tap-hint { display: none; }
+
+    .slides { position: absolute; inset: 0; z-index: 2; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 78px 22px 84px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(18px) scale(0.985);
+      transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+
+    .card {
+      width: min(920px, 100%);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.92);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: clamp(22px, 4vw, 42px);
+      position: relative;
+      overflow: hidden;
+      margin: auto;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--path-a), var(--path-b));
+    }
+    .card.theme-a::before { background: var(--path-a); }
+    .card.theme-b::before { background: var(--path-b); }
+    .card.theme-meet::before { background: linear-gradient(180deg, var(--path-a), var(--meet), var(--path-b)); }
+
+    .eyebrow {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 12px;
+    }
+
+    h1, h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    h1 { font-size: clamp(1.85rem, 5.6vw, 3.2rem); margin-bottom: 14px; }
+    h2 { font-size: clamp(1.45rem, 4.2vw, 2.35rem); margin-bottom: 12px; }
+    .lead {
+      font-size: clamp(1rem, 2.3vw, 1.18rem);
+      line-height: 1.55;
+      color: var(--ink-soft);
+      max-width: 40rem;
+    }
+    .hero-mark {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.05rem, 2.4vw, 1.28rem);
+      font-weight: 700;
+      color: var(--meet);
+      margin-bottom: 8px;
+    }
+
+    .grid-2, .grid-3, .flip-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .flip-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .tile {
+      background: rgba(243,246,248,0.88);
+      border: 1px solid rgba(12,26,36,0.06);
+      border-radius: 16px;
+      padding: 15px 15px 13px;
+    }
+    .tile h3 { font-size: 0.96rem; font-weight: 700; margin-bottom: 6px; }
+    .tile p { font-size: 0.9rem; line-height: 1.45; color: var(--ink-soft); }
+    .tile.a { border-top: 3px solid var(--path-a); }
+    .tile.b { border-top: 3px solid var(--path-b); }
+    .tile.meet { border-top: 3px solid var(--meet); }
+
+    .level {
+      display: inline-flex;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      background: var(--path-a-soft);
+      color: var(--path-a);
+    }
+    .level.b { background: var(--path-b-soft); color: #8a5a12; }
+
+    .prompt {
+      margin-top: 16px;
+      background: #0c1a24;
+      color: #e8f0f4;
+      border-radius: 16px;
+      padding: 15px 17px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .prompt::before {
+      content: "Para copiar y probar";
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7fb8ad;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .prompt.b::before { color: #e2b56a; content: "Instrucción base del asistente"; }
+
+    .list { margin-top: 14px; display: grid; gap: 10px; }
+    .list li {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 0.98rem;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+    .list .n {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.76rem; font-weight: 700;
+      background: var(--path-a-soft); color: var(--path-a);
+    }
+    .list.b .n { background: var(--path-b-soft); color: #8a5a12; }
+
+    .fork {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .fork-card {
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 150px;
+    }
+    .fork-card.a {
+      background: linear-gradient(160deg, #dff4ef, #f4fbf9);
+      border: 1px solid rgba(31,138,122,0.25);
+    }
+    .fork-card.b {
+      background: linear-gradient(160deg, #f8ead2, #fff8ec);
+      border: 1px solid rgba(201,133,42,0.28);
+    }
+    .fork-mid {
+      display: grid;
+      place-items: center;
+      font-family: "Fraunces", serif;
+      font-size: 1.35rem;
+      color: var(--ink-soft);
+      padding-top: 36px;
+    }
+    .fork-card h3 {
+      font-family: "Fraunces", serif;
+      font-size: 1.22rem;
+      margin: 8px 0;
+    }
+    .fork-card p { color: var(--ink-soft); font-size: 0.9rem; line-height: 1.45; }
+    .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 9px;
+      border-radius: 999px;
+    }
+    .tag.a { background: rgba(31,138,122,0.15); color: var(--path-a); }
+    .tag.b { background: rgba(201,133,42,0.18); color: #8a5a12; }
+
+    /* Animated path maps */
+    .map {
+      margin-top: 18px;
+      height: 110px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 70% 40%, #16384c 0%, #0c1a24 70%);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.25);
+    }
+    .map svg { width: 100%; height: 100%; display: block; }
+    .map-label {
+      position: absolute;
+      top: 10px; left: 14px;
+      color: rgba(255,255,255,0.72);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      z-index: 2;
+    }
+    .map .glow {
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+    .map path.draw {
+      stroke-dasharray: 900;
+      stroke-dashoffset: 900;
+    }
+    .slide.active .map path.draw {
+      animation: drawPath 2.2s ease forwards;
+    }
+    .slide.active .map path.draw.delay {
+      animation-delay: 0.25s;
+    }
+    @keyframes drawPath {
+      to { stroke-dashoffset: 0; }
+    }
+    .map .pulse {
+      opacity: 0;
+    }
+    .slide.active .map .pulse {
+      animation: pulseDot 1.8s ease-in-out 1.6s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.55; r: 6; }
+      50% { opacity: 1; r: 9; }
+    }
+    .traveler {
+      offset-distance: 0%;
+      opacity: 0;
+    }
+    .slide.active .traveler.a {
+      animation: travelA 3.2s ease-in-out 0.4s infinite;
+    }
+    .slide.active .traveler.b {
+      animation: travelB 3.2s ease-in-out 0.55s infinite;
+    }
+    @keyframes travelA {
+      0% { offset-distance: 0%; opacity: 0; }
+      12% { opacity: 1; }
+      88% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0.2; }
+    }
+    @keyframes travelB {
+      0% { offset-distance: 0%; opacity: 0; }
+      12% { opacity: 1; }
+      88% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0.2; }
+    }
+
+    .warn {
+      margin-top: 14px;
+      border-radius: 14px;
+      padding: 13px 15px;
+      background: #fbeceb;
+      border: 1px solid rgba(181,74,58,0.2);
+      color: #7a2f26;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .note {
+      margin-top: 14px;
+      border-radius: 14px;
+      padding: 13px 15px;
+      background: #eef6f4;
+      border: 1px solid rgba(31,138,122,0.2);
+      color: #1d4f47;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .big-quote {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.3rem, 3.4vw, 1.85rem);
+      line-height: 1.28;
+      color: var(--ink);
+      max-width: 24ch;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(12,26,36,0.07);
+      color: var(--ink);
+    }
+
+    /* Flip cards */
+    .flip-hint {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+    }
+    .flip-hint span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--path-a-soft);
+      color: var(--path-a);
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+    }
+    .flip {
+      perspective: 1200px;
+      min-height: 128px;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .flip:focus-visible { outline: 2px solid var(--path-a); outline-offset: 3px; border-radius: 16px; }
+    .flip-inner {
+      position: relative;
+      width: 100%;
+      min-height: 128px;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(.2,.8,.2,1);
+    }
+    .flip.is-flipped .flip-inner { transform: rotateY(180deg); }
+    .flip-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(12,26,36,0.07);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .flip-front {
+      background: linear-gradient(165deg, #f4fbf9, #eaf5f2);
+      border-top: 3px solid var(--path-a);
+    }
+    .flip-back {
+      background: #0c1a24;
+      color: #e8f0f4;
+      transform: rotateY(180deg);
+    }
+    .flip-front h3, .flip-back h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .flip-front p, .flip-back p {
+      font-size: 0.84rem;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+    .flip-back p { color: rgba(232,240,244,0.88); }
+    .flip-back .ex {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #7fb8ad;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .flip-ico {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 0.85rem;
+      opacity: 0.55;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .compare .box {
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .compare .box h3 {
+      font-family: "Fraunces", serif;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .compare .box p { font-size: 0.9rem; line-height: 1.45; color: var(--ink-soft); }
+    .compare .ask {
+      background: #eef2f5;
+      border: 1px solid rgba(12,26,36,0.06);
+    }
+    .compare .live {
+      background: linear-gradient(160deg, #f8ead2, #fff8ec);
+      border: 1px solid rgba(201,133,42,0.28);
+    }
+
+    .alexa-flow {
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+    .alexa-flow .row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: center;
+      background: rgba(247,232,207,0.45);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+    .alexa-flow .t {
+      font-weight: 700;
+      color: #8a5a12;
+      font-size: 0.8rem;
+    }
+
+    .nav-hit {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 18%;
+      z-index: 4;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .nav-hit.prev { left: 0; }
+    .nav-hit.next { right: 0; }
+
+    @media (max-width: 820px) {
+      .grid-3, .flip-grid, .fork, .compare { grid-template-columns: 1fr 1fr; }
+      .fork-mid { display: none; }
+    }
+    @media (max-width: 640px) {
+      .slide { padding: 72px 12px 88px; }
+      .card { padding: 18px 16px; border-radius: 18px; }
+      .grid-2, .grid-3, .flip-grid, .fork, .compare { grid-template-columns: 1fr; }
+      .progress-wrap { max-width: 72px; }
+      .hint { display: none; }
+      .tap-hint {
+        display: block;
+        font-size: 0.74rem;
+        color: var(--ink-soft);
+        background: rgba(255,255,255,0.72);
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+      .brand span.full { display: none; }
+      .path-pill { display: none; }
+      .nav-hit { width: 14%; }
+      .flip { min-height: 118px; }
+      .flip-inner { min-height: 118px; }
+      .map { height: 96px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .slide, .path-pill, .progress-bar, .flip-inner, .orb { transition: none; animation: none !important; }
+      .map path.draw { stroke-dashoffset: 0; }
+      .traveler, .pulse { opacity: 1 !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="orb one" aria-hidden="true"></div>
+    <div class="orb two" aria-hidden="true"></div>
+    <div class="orb three" aria-hidden="true"></div>
+    <div class="grain"></div>
+
+    <button class="nav-hit prev" aria-label="Anterior"></button>
+    <button class="nav-hit next" aria-label="Siguiente"></button>
+
+    <div class="chrome">
+      <div class="topbar">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span>IA en la oficina <span class="full">· Sgo. del Estero</span></span>
+        </div>
+        <div id="pathPill" class="path-pill">Inicio</div>
+        <div class="progress-wrap" aria-hidden="true"><div id="progress" class="progress-bar"></div></div>
+      </div>
+      <div class="bottombar">
+        <div class="hint">Avanzá con <kbd>Espacio</kbd> · atrás <kbd>←</kbd></div>
+        <div class="tap-hint">Deslizá o tocá a los costados</div>
+        <div id="counter" class="counter">1 / 1</div>
+      </div>
+    </div>
+
+    <div class="slides" id="slides">
+
+      <!-- 1 -->
+      <section class="slide active" data-path="start">
+        <div class="card">
+          <div class="hero-mark">Charla práctica · Santiago del Estero</div>
+          <h1>IA en el día a día de tu oficina</h1>
+          <p class="lead">Cómo usarla en mails, agendas, expedientes y la rutina de todos los días — sin volverte técnico/a.</p>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="slide" data-path="start">
+        <div class="card">
+          <p class="eyebrow">De qué va esto</p>
+          <h2>Tres cosas útiles, nada más</h2>
+          <p class="lead">Cómo pedirle ayuda a ChatGPT, Claude o Gemini. En qué te puede ahorrar tiempo. Y qué es eso de un asistente que te acompaña solo, sin que lo estés “despertando” a cada rato.</p>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="slide" data-path="start" data-anim="fork">
+        <div class="card">
+          <p class="eyebrow">Cómo lo vamos a ver</p>
+          <h2>Dos caminos. Al final se juntan.</h2>
+          <p class="lead">Primero cada uno por su lado. Después vemos cómo se usan juntos en una misma jornada.</p>
+          <div class="fork">
+            <div class="fork-card a">
+              <span class="tag a">Camino A</span>
+              <h3>La IA que ya conocés</h3>
+              <p>Abrís el chat, pedís, revisás. Sirve para redactar, ordenar y pensar más rápido.</p>
+            </div>
+            <div class="fork-mid">⟷</div>
+            <div class="fork-card b">
+              <span class="tag b">Camino B</span>
+              <h3>El asistente en vivo</h3>
+              <p>Tipo Alexa de oficina: te va siguiendo el día, te avisa y te da una mano sin que se lo pidas cada vez.</p>
+            </div>
+          </div>
+          <div class="map map-fork" aria-hidden="true">
+            <div class="map-label">Recorrido</div>
+            <svg viewBox="0 0 800 110" preserveAspectRatio="none">
+              <path id="forkA" class="draw glow" d="M50 55 C 170 55, 210 22, 340 22 C 450 22, 490 55, 600 55 C 680 55, 730 55, 760 55" fill="none" stroke="#1f8a7a" stroke-width="4" stroke-linecap="round"/>
+              <path id="forkB" class="draw delay glow" d="M50 55 C 170 55, 210 88, 340 88 C 450 88, 490 55, 600 55 C 680 55, 730 55, 760 55" fill="none" stroke="#c9852a" stroke-width="4" stroke-linecap="round"/>
+              <circle class="traveler a" r="5" fill="#7fd0c0" style="offset-path: path('M50 55 C 170 55, 210 22, 340 22 C 450 22, 490 55, 600 55 C 680 55, 730 55, 760 55');" />
+              <circle class="traveler b" r="5" fill="#e2b56a" style="offset-path: path('M50 55 C 170 55, 210 88, 340 88 C 450 88, 490 55, 600 55 C 680 55, 730 55, 760 55');" />
+              <circle cx="50" cy="55" r="5" fill="#fff"/>
+              <circle class="pulse" cx="600" cy="55" r="7" fill="#3d8bb0"/>
+              <circle cx="760" cy="55" r="5" fill="#fff"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- PATH A -->
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Camino A</span>
+          <h2>ChatGPT, Claude, Gemini…</h2>
+          <p class="lead">Las abrís en el navegador (o el celu), escribís lo que necesitás, y te responden. Eso es todo para empezar.</p>
+          <div class="grid-3">
+            <div class="tile a"><h3>ChatGPT</h3><p>Cómoda para redactar y sacar ideas.</p></div>
+            <div class="tile a"><h3>Claude</h3><p>Muy buena con textos largos y tono cuidadoso.</p></div>
+            <div class="tile a"><h3>Gemini</h3><p>Práctica si usás Gmail, Docs o Drive.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 1 · Pedir bien</span>
+          <h2>Decile quién sos, qué querés y cómo lo querés</h2>
+          <p class="lead">Si le hablás vago, responde vago. Si le das contexto, se pone útil.</p>
+          <div class="prompt">
+            Trabajo en una oficina en Santiago del Estero. Armame un checklist corto (8 ítems) para arrancar el día: mails, pendientes, turnos. Lenguaje simple.
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 1 · Para mañana mismo</span>
+          <h2>Pedidos que suelen funcionar</h2>
+          <div class="grid-2">
+            <div class="tile a"><h3>Resumí este mail</h3><p>“En 5 viñetas: qué piden y qué tengo que hacer.”</p></div>
+            <div class="tile a"><h3>Ordená mis tareas</h3><p>“Estas 7 cosas: ¿qué va primero y qué puede esperar?”</p></div>
+            <div class="tile a"><h3>Armá la reunión</h3><p>“Agenda de 30 minutos, con tiempos.”</p></div>
+            <div class="tile a"><h3>Cambiá el tono</h3><p>“Más formal / más corto / más amable.”</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 2 · Organizar</span>
+          <h2>Agenda, recordatorios y el check del día</h2>
+          <p class="lead">No reemplaza tu calendario. Te ayuda a no olvidarte de lo importante.</p>
+          <ul class="list">
+            <li><span class="n">1</span><span><strong>A la mañana:</strong> urgentes, vencimientos, lo que quedó de ayer.</span></li>
+            <li><span class="n">2</span><span><strong>Durante el día:</strong> 2 o 3 bloques de foco, sin pretender hacer 20 cosas.</span></li>
+            <li><span class="n">3</span><span><strong>Al cerrar:</strong> qué salió, qué pasa a mañana, qué hay que avisar.</span></li>
+          </ul>
+          <div class="prompt">
+            Con esta lista: [pegar]. Dame: top 3 de hoy, qué puede esperar, un recordatorio clave, y un cierre del día en 4 líneas.
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 2 · Más usos</span>
+          <h2>Otras cosas que suelen ayudar</h2>
+          <div class="grid-2">
+            <div class="tile a"><h3>Ordenar la bandeja</h3><p>Responder / archivar / pasar / esperar.</p></div>
+            <div class="tile a"><h3>Dejar plantillas</h3><p>Un buen mail convertido en modelo para reusar.</p></div>
+            <div class="tile a"><h3>Cierre del viernes</h3><p>“¿Qué hice, qué trabó, qué pido la semana que viene?”</p></div>
+            <div class="tile a"><h3>Arranque del lunes</h3><p>El viernes pedile un borrador del plan del lunes.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 3 · Redactar</span>
+          <h2>Mails y notas sin pelearte con el teclado</h2>
+          <p class="lead">Que se entienda, que sea respetuoso, y que no tenga vueltas.</p>
+          <div class="prompt">
+            Redactá un mail corto y formal a mesas de entrada. Pedir estado de un expediente. Datos: [N° / interesado / fecha]. Incluí asunto sugerido.
+          </div>
+          <div class="warn"><strong>Ojo:</strong> ella propone, vos firmás. Revisá nombres, fechas y números. No pegues DNI, claves ni datos sensibles.</div>
+        </div>
+      </section>
+
+      <!-- Flip cards slide -->
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 3 · Procesos</span>
+          <h2>Tocá una tarjeta y mirá el ejemplo</h2>
+          <p class="flip-hint"><span>👆 manito · dar vuelta</span> Cada una tiene el pedido concreto atrás.</p>
+          <div class="flip-grid" id="flipGrid">
+            <button type="button" class="flip" aria-label="Oficios y notas">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Oficios y notas</h3>
+                  <p>Borrador + versión corta + qué datos no pueden faltar.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>Oficio</h3>
+                  <p>“Armá un borrador de nota pidiendo informe al área X. Después una versión de 6 líneas y una lista de datos obligatorios.”</p>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="flip" aria-label="Actas y minutas">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Actas / minutas</h3>
+                  <p>De apuntes sueltos a algo que se pueda compartir.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>Minuta</h3>
+                  <p>“Con estos apuntes: acuerdos, responsables y fechas. Sin inventar lo que no diga el texto.”</p>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="flip" aria-label="Atención al público">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Atención al público</h3>
+                  <p>Respuestas claras, sin prometer de más.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>Consulta frecuente</h3>
+                  <p>“Explicá cómo iniciar el trámite Y, en lenguaje simple, y qué documentación hace falta.”</p>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="flip" aria-label="Inducción al equipo">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Inducción al equipo</h3>
+                  <p>FAQ del área, pasos del circuito, “cómo se hace acá”.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>FAQ interna</h3>
+                  <p>“Con estas 10 preguntas reales del área, armá respuestas cortas para alguien que recién entra.”</p>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="flip" aria-label="Comparar versiones">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Comparar versiones</h3>
+                  <p>Ver qué cambió entre un borrador y otro.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>Diff en humano</h3>
+                  <p>“Compará A y B. Listá cambios importantes. Marcá si algo quedó ambiguo.”</p>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="flip" aria-label="Informes">
+              <div class="flip-inner">
+                <div class="flip-face flip-front">
+                  <span class="flip-ico">↺</span>
+                  <h3>Informes</h3>
+                  <p>Estructura: título, qué pasó, riesgos, próximos pasos.</p>
+                </div>
+                <div class="flip-face flip-back">
+                  <span class="ex">Ejemplo</span>
+                  <h3>Informe corto</h3>
+                  <p>“Con estos datos, armá un informe de una página. Separá hechos de opiniones.”</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Demo · Camino A</span>
+          <h2>Ahora lo vemos en vivo</h2>
+          <p class="lead">Abrimos una de las tres (ChatGPT, Claude o Gemini) y hacemos tres pedidos cortos.</p>
+          <ul class="list">
+            <li><span class="n">1</span><span>Priorizar tareas de un día de oficina.</span></li>
+            <li><span class="n">2</span><span>Redactar un mail de seguimiento de expediente.</span></li>
+            <li><span class="n">3</span><span>Pasar apuntes de reunión a minuta.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Nivel 4 · Cuidado</span>
+          <h2>Dónde conviene ir despacio</h2>
+          <div class="grid-2">
+            <div class="tile a"><h3>Datos personales</h3><p>DNI, salud, padrones, contraseñas: mejor no.</p></div>
+            <div class="tile a"><h3>Temas legales</h3><p>Plazos y normas: siempre contrastá con la fuente.</p></div>
+            <div class="tile a"><h3>Lo que firmás</h3><p>La responsabilidad es tuya, no del chat.</p></div>
+            <div class="tile a"><h3>Si “suena perfecto”</h3><p>Y no tenés de dónde salió: desconfiá.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="a">
+        <div class="card theme-a">
+          <span class="level">Fin del Camino A</span>
+          <h2>Hasta acá: pedís, te ayuda, vos revisás</h2>
+          <p class="lead">Eso es el chat. Ahora viene lo distinto: un asistente que no espera a que lo llames.</p>
+        </div>
+      </section>
+
+      <!-- PATH B -->
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Camino B</span>
+          <h2>No es “hacé esto”. Es que esté ahí.</h2>
+          <p class="lead">La diferencia con ChatGPT no es solo que “ejecute”. Es que te acompañe en vivo: te mire el día, te avise y te dé una mano sin que tengas que acordarte de preguntarle.</p>
+          <div class="compare">
+            <div class="box ask">
+              <h3>Chat (A)</h3>
+              <p>Vos abrís. Vos preguntás. Él responde. Se apaga hasta la próxima.</p>
+            </div>
+            <div class="box live">
+              <h3>Asistente en vivo (B)</h3>
+              <p>Queda “prendido” en tu jornada. Te recuerda, te chequea pendientes y, si hace falta, hace borradores… y vos supervisás.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">La idea fuerte</span>
+          <h2>Como un Alexa de oficina</h2>
+          <p class="lead">No estás charlando todo el tiempo. Él va mirando el ritmo del día y aparece cuando corresponde.</p>
+          <div class="alexa-flow">
+            <div class="row"><span class="t">08:40</span><span>“Buen día. Tenés 2 vencimientos y 1 mail sin responder de ayer. ¿Arrancamos por eso?”</span></div>
+            <div class="row"><span class="t">11:15</span><span>“Llevás 40 min en el informe. ¿Querés un esquema para no trabarte?”</span></div>
+            <div class="row"><span class="t">15:50</span><span>“Falta el seguimiento al expediente 128. Te armo el mail y lo dejamos listo para tu OK.”</span></div>
+            <div class="row"><span class="t">16:40</span><span>“Cierre: 4 hechas, 2 pasan a mañana. ¿Te dejo el checklist de mañana?”</span></div>
+          </div>
+          <div class="note"><strong>Dos modos:</strong> a veces <em>hace</em> (borrador, checklist, recordatorio). A veces solo <em>supervisa</em> (te avisa, te ordena, te pregunta). Vos mandás.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Qué sí puede hacer (de a poco)</span>
+          <h2>Lo mínimo para que valga la pena</h2>
+          <div class="grid-3">
+            <div class="tile b"><h3>Estar presente</h3><p>Checkpoints solo, sin que lo llames.</p></div>
+            <div class="tile b"><h3>Mirar pendientes</h3><p>Vencimientos, seguimientos, “esto quedó colgado”.</p></div>
+            <div class="tile b"><h3>Empujar suave</h3><p>Un toque a mitad de mañana si se te fue el día.</p></div>
+            <div class="tile b"><h3>Hacer borradores</h3><p>Mails y minutas listos para tu visto bueno.</p></div>
+            <div class="tile b"><h3>Preguntar</h3><p>Si le falta un dato, no inventa: te consulta.</p></div>
+            <div class="tile b"><h3>Vos cerrás</h3><p>Nada se manda solo. Siempre hay un humano.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Cómo se arma (en criollo)</span>
+          <h2>Rol + reglas + ritmo</h2>
+          <p class="lead">No hace falta programar para entender la idea. Es una instrucción que deja al asistente “en modo jornada”.</p>
+          <ul class="list b">
+            <li><span class="n">1</span><span><strong>Rol:</strong> asistente de oficina que acompaña el día.</span></li>
+            <li><span class="n">2</span><span><strong>Reglas:</strong> no inventar; avisar; pedir OK antes de “enviar”.</span></li>
+            <li><span class="n">3</span><span><strong>Ritmo:</strong> mañana, mediodía y cierre — aunque vos no digas nada.</span></li>
+          </ul>
+          <div class="prompt b">
+            Sos mi asistente de jornada en la oficina. No esperes a que te pregunte: a la mañana pedime foco y vencimientos; a mitad de día chequeá pendientes; al cierre armá resumen y el checklist de mañana. Si preparás un texto para enviar, pedí mi OK. Si te falta un dato, preguntá.
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Demo · Camino B</span>
+          <h2>Simulamos el asistente en vivo</h2>
+          <p class="lead">En 5 minutos: cómo te habla solo, qué propone hacer, y dónde pedís el OK.</p>
+          <div class="grid-2">
+            <div class="tile b"><h3>Él inicia</h3><p>No esperás el prompt: aparece el check de la mañana.</p></div>
+            <div class="tile b"><h3>Él propone</h3><p>“Te armo el mail de seguimiento” — vos mirás.</p></div>
+            <div class="tile b"><h3>Vos supervisás</h3><p>Corregís un dato, das el visto bueno.</p></div>
+            <div class="tile b"><h3>Él cierra</h3><p>Deja el día ordenado sin que lo hayas pedido.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Límites</span>
+          <h2>Que acompañe, no que se mande solo</h2>
+          <div class="grid-2">
+            <div class="tile b"><h3>No firma por vos</h3><p>Ni habla “en nombre de la oficina” sin control.</p></div>
+            <div class="tile b"><h3>No inventa el expediente</h3><p>Si no tiene el dato, pregunta.</p></div>
+            <div class="tile b"><h3>No carga secretos</h3><p>Datos sensibles: fuera de herramientas no autorizadas.</p></div>
+            <div class="tile b"><h3>Sí te ordena el día</h3><p>Constancia, avisos, borradores, memoria corta.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="b">
+        <div class="card theme-b">
+          <span class="level b">Fin del Camino B</span>
+          <h2>Chat = pedís. Asistente = te acompaña.</h2>
+          <p class="lead">Uno responde cuando lo llamás. El otro mira la jornada con vos. Ahora los juntamos.</p>
+        </div>
+      </section>
+
+      <!-- CONVERGENCE -->
+      <section class="slide" data-path="meet" data-anim="meet">
+        <div class="card theme-meet">
+          <p class="eyebrow">Se encuentran</p>
+          <h2>Los dos en la misma mesa</h2>
+          <p class="lead">El chat te saca del apuro en el momento. El asistente te sostiene el día. No compiten: se turnan.</p>
+          <div class="map map-meet" aria-hidden="true">
+            <div class="map-label">A + B → misma jornada</div>
+            <svg viewBox="0 0 800 110" preserveAspectRatio="none">
+              <path class="draw glow" d="M40 28 C 220 28, 300 28, 420 55 C 520 75, 620 55, 760 55" fill="none" stroke="#1f8a7a" stroke-width="4" stroke-linecap="round"/>
+              <path class="draw delay glow" d="M40 82 C 220 82, 300 82, 420 55 C 520 35, 620 55, 760 55" fill="none" stroke="#c9852a" stroke-width="4" stroke-linecap="round"/>
+              <circle class="traveler a" r="5" fill="#7fd0c0" style="offset-path: path('M40 28 C 220 28, 300 28, 420 55 C 520 75, 620 55, 760 55');" />
+              <circle class="traveler b" r="5" fill="#e2b56a" style="offset-path: path('M40 82 C 220 82, 300 82, 420 55 C 520 35, 620 55, 760 55');" />
+              <circle class="pulse" cx="420" cy="55" r="8" fill="#3d8bb0"/>
+              <circle cx="760" cy="55" r="5" fill="#fff"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="meet">
+        <div class="card theme-meet">
+          <p class="eyebrow">Un día cualquiera</p>
+          <h2>Cómo se reparten el trabajo</h2>
+          <div class="grid-2">
+            <div class="tile meet"><h3>Mañana · asistente</h3><p>Te saluda, te marca vencimientos, arma el checklist.</p></div>
+            <div class="tile meet"><h3>Cuando trabás · chat</h3><p>Mail difícil, PDF largo, reunión improvisada.</p></div>
+            <div class="tile meet"><h3>A la tarde · asistente</h3><p>“¿Mandamos el seguimiento?” — borrador + tu OK.</p></div>
+            <div class="tile meet"><h3>Cierre · asistente</h3><p>Qué quedó, qué pasa mañana. Sin drama.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-path="meet">
+        <div class="card theme-meet">
+          <p class="eyebrow">Si querés probar algo</p>
+          <h2>Tres ensayos chicos</h2>
+          <ul class="list">
+            <li><span class="n">1</span><span>Mañana: pedile a ChatGPT/Claude/Gemini que ordene tus tareas del día.</span></li>
+            <li><span class="n">2</span><span>Cuando tengas un mail trabado: pedile borrador y reescribilo vos.</span></li>
+            <li><span class="n">3</span><span>Si te da curiosidad el Camino B: usá la instrucción base y dejá que te “abra” y te “cierre” el día dos veces.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="slide" data-path="meet">
+        <div class="card theme-meet">
+          <p class="eyebrow">Para cerrar</p>
+          <h2 class="big-quote">La IA no piensa por vos. Te deja más tiempo para pensar.</h2>
+          <p class="lead" style="margin-top:16px">Empezá con poco. Revisá siempre. Si algo te sirve, contáselo al compañero de al lado.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-path="meet">
+        <div class="card theme-meet">
+          <div class="hero-mark">Gracias</div>
+          <h1>¿Qué les quedó dando vueltas?</h1>
+          <p class="lead">Dudas, miedos, un caso de su mesa. Si quieren, armamos un prompt juntos con un problema real.</p>
+          <div class="cta-row">
+            <span class="chip">Santiago del Estero</span>
+            <span class="chip">Oficina · día a día</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const progress = document.getElementById("progress");
+    const counter = document.getElementById("counter");
+    const pathPill = document.getElementById("pathPill");
+    let i = 0;
+
+    const pathMeta = {
+      start: { label: "Inicio", cls: "" },
+      a: { label: "Camino A · chat", cls: "a" },
+      b: { label: "Camino B · asistente", cls: "b" },
+      meet: { label: "Se encuentran", cls: "meet" }
+    };
+
+    function restartMapAnimations(slide) {
+      const maps = slide.querySelectorAll(".map");
+      maps.forEach((map) => {
+        const clone = map.cloneNode(true);
+        map.parentNode.replaceChild(clone, map);
+      });
+    }
+
+    function render() {
+      slides.forEach((s, idx) => {
+        const on = idx === i;
+        s.classList.toggle("active", on);
+        if (on) restartMapAnimations(s);
+      });
+      const total = slides.length;
+      progress.style.width = ((i + 1) / total) * 100 + "%";
+      counter.textContent = (i + 1) + " / " + total;
+      const path = slides[i].dataset.path || "start";
+      const meta = pathMeta[path] || pathMeta.start;
+      pathPill.textContent = meta.label;
+      pathPill.className = "path-pill show " + meta.cls;
+    }
+
+    function go(delta) {
+      const next = Math.max(0, Math.min(slides.length - 1, i + delta));
+      if (next === i) return;
+      i = next;
+      render();
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target.closest && e.target.closest(".flip")) return;
+      if (e.code === "Space" || e.key === "ArrowRight" || e.key === "PageDown") {
+        e.preventDefault();
+        go(1);
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        go(-1);
+      } else if (e.key === "Home") { i = 0; render(); }
+      else if (e.key === "End") { i = slides.length - 1; render(); }
+    });
+
+    document.querySelector(".nav-hit.next").addEventListener("click", () => go(1));
+    document.querySelector(".nav-hit.prev").addEventListener("click", () => go(-1));
+
+    // Flip cards
+    document.querySelectorAll(".flip").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        btn.classList.toggle("is-flipped");
+      });
+    });
+
+    // Swipe mobile (ignore if interacting with flip)
+    let sx = 0, sy = 0, startEl = null;
+    window.addEventListener("touchstart", (e) => {
+      const t = e.changedTouches[0];
+      sx = t.screenX; sy = t.screenY;
+      startEl = e.target;
+    }, { passive: true });
+    window.addEventListener("touchend", (e) => {
+      if (startEl && startEl.closest && startEl.closest(".flip")) return;
+      const t = e.changedTouches[0];
+      const dx = t.screenX - sx;
+      const dy = t.screenY - sy;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) go(1);
+        else go(-1);
+      }
+    }, { passive: true });
+
+    render();
+  </script>
+</body>
+</html>
